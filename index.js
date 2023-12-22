@@ -25,7 +25,38 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
 
-    const jobsCollection = client.db("TodoDB").collection("Todo");
+    const tasksCollection = client.db("TodoDB").collection("Tasks");
+
+    app.get("/tasks", async (req, res) => {
+      let query = {};
+      if (req.query?.email) {
+        query = { email: req.query.email };
+      }
+      const result = await tasksCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.delete("/task/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await tasksCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    app.patch("/tasks/:id", async (req, res) => {
+      const taskId = req.params.id;
+      const { status } = req.body;
+      const result = tasksCollection.updateOne(
+        { _id: new ObjectId(taskId) },
+        { $set: { status } }
+      );
+      res.send(result);
+    });
+
+    app.post("/tasks", async (req, res) => {
+      const task = req.body;
+      const result = await tasksCollection.insertOne(task);
+      res.send(result);
+    });
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
